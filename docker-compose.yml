@@ -1,26 +1,46 @@
-version: "3.2"
+version: "3.8"
 
 services:
-#MariaDB Container
   mariadb:
     image: mariadb:10.7
     container_name: mariadb
     hostname: mariadb
+    env_file:
+      - .env
+    environment:
+      - MARIADB_ROOT_PASSWORD=${DB_ROOT_PASSWORD}
+      - MARIADB_DATABASE=${MARIADB_DATABASE}
+      - MARIADB_USER=${MARIADB_USER}
+      - MARIADB_PASSWORD=${MARIADB_PASSWORD}
     volumes:
-      - /var/lib/mysql:/var/lib/mysql
+      - /home/glpi/db:/var/lib/mysql
     restart: always
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
-#GLPI Container
   glpi:
     image: diouxx/glpi
-    container_name : glpi
+    container_name: glpi
     hostname: glpi
-    ports:
-      - "80:80"
+    depends_on:
+      - mariadb
+    env_file:
+      - .env
+    environment:
+      - TIMEZONE=${TIMEZONE}
+      - VERSION_GLPI=${GLPI_VERSION}
     volumes:
+      - /home/glpi/http:/var/www/html/glpi
       - /etc/timezone:/etc/timezone:ro
       - /etc/localtime:/etc/localtime:ro
-      - /var/www/html/glpi/:/var/www/html/glpi
-    environment:
-      - TIMEZONE=America/Sao_Paulo
+    ports:
+      - "80:80"
     restart: always
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
