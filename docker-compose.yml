@@ -14,6 +14,8 @@ services:
       - MARIADB_PASSWORD=${MARIADB_PASSWORD}
     volumes:
       - /home/glpi/db:/var/lib/mysql
+    ports:
+      - "3306:3306"
     restart: always
 
   glpi:
